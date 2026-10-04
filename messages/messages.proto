@@ -1,0 +1,134 @@
+// The two declarations below are REQUIRED and must stay at the top.
+// Without `syntax = "proto3";` protoc falls back to proto2 and refuses every
+// field with: Expected "required", "optional", or "repeated".
+syntax = "proto3";
+
+package christiangeorgelucas.storage_tools;
+
+// This file defines the data contracts (messages) for your Axiom package.
+// Every node's --input and --output refers to a message defined here.
+//
+// Run `axiom create message <Name>` to scaffold a new message below.
+// Run `axiom generate` to compile these definitions into language bindings in gen/.
+//
+// DOCUMENTATION
+//   Comments written directly above a message or field declaration are extracted
+//   automatically at publish time and shown in the Axiom registry as documentation.
+//   Write your descriptions there — no separate doc files needed.
+//
+//   Leading comment  (no blank line before the declaration) → registry description ✓
+//   Detached comment (blank line before the declaration)    → ignored by registry  ✗
+//
+// This file is yours to edit. Axiom only appends new message blocks — it never
+// overwrites or removes content you have written.
+
+// Where an app's bucket lives and how to sign for it, given as five tenant-secret
+// NAMES (never values). Each name must also appear in the binding Instance's
+// required_secrets, which is what makes the value deliverable at invocation.
+// For a generated Axiom app these are the provisioned
+// `__axiom_prov_<slug>_storage_*` secrets.
+message StorageConnection {
+  // Secret holding the S3-compatible endpoint as an absolute URL with no bucket
+  // and no path, e.g. https://br-xxx.storage.c-1.us-east-2.aws.neon.tech.
+  string endpoint_secret_name = 1;
+  // Secret holding the SigV4 signing region, e.g. us-east-2 (a Neon-style
+  // `aws-us-east-2` is accepted and the `aws-` prefix stripped).
+  string region_secret_name = 2;
+  // Secret holding the bare bucket name; URLs are built path-style as
+  // <endpoint>/<bucket>/<key>.
+  string bucket_secret_name = 3;
+  // Secret holding the S3 access key id (Neon: the credential's token_id).
+  string access_key_id_secret_name = 4;
+  // Secret holding the S3 secret access key (Neon: s3_secret_access_key).
+  string secret_access_key_secret_name = 5;
+}
+
+// Ask for a short-lived presigned URL that lets a browser upload ONE object with
+// a plain HTTP PUT, without ever holding a credential.
+message PresignPutInput {
+  // Which bucket and credentials to sign with (secret names only).
+  StorageConnection connection = 1;
+  // Object key: an opaque string, 1-1024 UTF-8 bytes, no leading '/', no empty,
+  // '.' or '..' path segments, no control characters. The node never lists the
+  // bucket; the caller owns the key scheme.
+  string key = 2;
+  // MIME type the upload must declare, e.g. image/png. When set it is signed
+  // into the URL, so the PUT must send exactly this Content-Type. Empty means
+  // unsigned (any Content-Type is accepted).
+  string content_type = 3;
+  // Lifetime of the URL in seconds, 1-604800. 0 means the default, 600.
+  int32 expires_s = 4;
+  // Declared size of the upload in bytes. When > 0 it is signed into the URL as
+  // Content-Length, so the store refuses any body of a different length: an
+  // exact-size bound, which is therefore also a maximum. 0 means unbounded.
+  int64 max_bytes = 5;
+}
+
+// A presigned upload: send the bytes with `method` to `url`, carrying `headers`.
+message PresignPutResult {
+  // The presigned URL (path-style, SigV4 query-string authentication).
+  string url = 1;
+  // Always "PUT".
+  string method = 2;
+  // Headers the upload must send exactly as given, because they are signed:
+  // Content-Type when content_type was set, Content-Length when max_bytes was
+  // set (browsers set Content-Length themselves from the body).
+  map<string, string> headers = 3;
+  // When the URL stops working, as Unix seconds (UTC).
+  int64 expires_at_unix = 4;
+}
+
+// Ask for a short-lived presigned URL that downloads ONE object with a plain GET.
+message PresignGetInput {
+  // Which bucket and credentials to sign with (secret names only).
+  StorageConnection connection = 1;
+  // Object key, same rules as PresignPutInput.key.
+  string key = 2;
+  // Lifetime of the URL in seconds, 1-604800. 0 means the default, 600.
+  int32 expires_s = 3;
+  // Optional file name to save as. When set the URL asks the store to answer
+  // with Content-Disposition: attachment and this name (UTF-8 safe, RFC 6266).
+  // Empty means the store's default disposition.
+  string download_name = 4;
+}
+
+// A presigned download URL.
+message PresignGetResult {
+  // The presigned URL (path-style, SigV4 query-string authentication).
+  string url = 1;
+  // When the URL stops working, as Unix seconds (UTC).
+  int64 expires_at_unix = 2;
+}
+
+// Look up one object's metadata with a signed HEAD request.
+message HeadObjectInput {
+  // Which bucket and credentials to use (secret names only).
+  StorageConnection connection = 1;
+  // Object key, same rules as PresignPutInput.key.
+  string key = 2;
+}
+
+// One object's metadata. A missing object is exists=false, not an error.
+message HeadObjectResult {
+  // True when the object exists.
+  bool exists = 1;
+  // Object size in bytes; 0 when it does not exist.
+  int64 size = 2;
+  // The object's stored Content-Type; empty when it does not exist.
+  string content_type = 3;
+}
+
+// Delete one object with a signed DELETE request.
+message DeleteObjectInput {
+  // Which bucket and credentials to use (secret names only).
+  StorageConnection connection = 1;
+  // Object key, same rules as PresignPutInput.key.
+  string key = 2;
+}
+
+// The outcome of a delete. Deleting a key that does not exist also succeeds
+// (S3 semantics), so a redelivered delete is harmless.
+message DeleteObjectResult {
+  // True when the object is gone.
+  bool ok = 1;
+}
