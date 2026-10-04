@@ -37,7 +37,7 @@ package: <handle>/<app>-files
 version: 0.1.0
 generic_package: christiangeorgelucas/storage-tools
 generic_node: PresignPut
-generic_version: 0.1.0
+generic_version: 0.1.1
 nodes:
   - node: <App>PresignPut
     description: Mint an upload URL for one of <app>'s files.
