@@ -41,7 +41,7 @@ def test_plain_put_matches_botocore():
 def test_typed_sized_put_matches_botocore_and_returns_the_signed_headers():
     out = _presign_put(Ctx(), PresignPutInput(
         connection=connection(), key="acme/photos/9/1/café.png", content_type="image/png",
-        expires_s=900, max_bytes=1024), NOW)
+        expires_s=900, content_length=1024, max_bytes=10 * 1024 * 1024), NOW)
     assert urlsplit(out.url).path == "/app-files/acme/photos/9/1/caf%C3%A9.png"
     q = _q(out.url)
     assert q["X-Amz-SignedHeaders"] == "content-length;content-type;host"
@@ -49,6 +49,36 @@ def test_typed_sized_put_matches_botocore_and_returns_the_signed_headers():
     assert q["X-Amz-Signature"] == BOTO_PUT_TYPED_SIZED_SIG
     assert dict(out.headers) == {"Content-Type": "image/png", "Content-Length": "1024"}
     assert out.expires_at_unix == int(NOW.timestamp()) + 900
+
+
+def test_max_bytes_caps_the_declared_length_inclusive():
+    at_cap = _presign_put(Ctx(), PresignPutInput(
+        connection=connection(), key="k", content_length=1024, max_bytes=1024), NOW)
+    assert dict(at_cap.headers) == {"Content-Length": "1024"}
+    with pytest.raises(AxiomNodeError) as e:
+        _presign_put(Ctx(), PresignPutInput(connection=connection(), key="k", content_length=1025, max_bytes=1024), NOW)
+    assert e.value.code == "MAX_BYTES_EXCEEDED"
+    assert e.value.detail == {"content_length": "1025", "max_bytes": "1024"}
+
+
+def test_max_bytes_without_a_declared_length_is_refused_not_silently_uncapped():
+    ax = Ctx()
+    with pytest.raises(AxiomNodeError) as e:
+        _presign_put(ax, PresignPutInput(connection=connection(), key="k", max_bytes=1024), NOW)
+    assert e.value.code == "MAX_BYTES_REQUIRES_CONTENT_LENGTH"
+    assert ax.secrets.asked == []
+
+
+def test_content_length_without_cap_is_signed():
+    out = _presign_put(Ctx(), PresignPutInput(connection=connection(), key="k", content_length=7), NOW)
+    assert _q(out.url)["X-Amz-SignedHeaders"] == "content-length;host"
+    assert dict(out.headers) == {"Content-Length": "7"}
+
+
+def test_content_type_is_canonicalised_as_signed():
+    out = _presign_put(Ctx(), PresignPutInput(
+        connection=connection(), key="k", content_type="  text/plain;\t charset=utf-8 "), NOW)
+    assert dict(out.headers) == {"Content-Type": "text/plain; charset=utf-8"}
 
 
 def test_content_type_alone_is_signed_without_length():
@@ -87,6 +117,9 @@ def test_public_entry_uses_the_wall_clock():
     (dict(key="k", expires_s=-5), "EXPIRES_INVALID"),
     (dict(key="k", expires_s=604801), "EXPIRES_INVALID"),
     (dict(key="k", max_bytes=-1), "MAX_BYTES_INVALID"),
+    (dict(key="k", content_length=-1), "CONTENT_LENGTH_INVALID"),
+    (dict(key="k", content_type="image/pngé"), "CONTENT_TYPE_INVALID"),
+    (dict(key="k", content_type="text/plain\u00a0x"), "CONTENT_TYPE_INVALID"),
     (dict(key="k", content_type="text/plain\r\nX-Evil: 1"), "CONTENT_TYPE_INVALID"),
 ])
 def test_refusals(inp, code):

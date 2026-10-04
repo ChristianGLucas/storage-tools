@@ -52,16 +52,24 @@ message PresignPutInput {
   // '.' or '..' path segments, no control characters. The node never lists the
   // bucket; the caller owns the key scheme.
   string key = 2;
-  // MIME type the upload must declare, e.g. image/png. When set it is signed
-  // into the URL, so the PUT must send exactly this Content-Type. Empty means
-  // unsigned (any Content-Type is accepted).
+  // MIME type the upload must declare, e.g. image/png (visible ASCII only).
+  // When set it is signed into the URL, so the PUT must send exactly this
+  // Content-Type. Empty means unsigned: the uploader may then store ANY type,
+  // including active content (text/html, image/svg+xml) that a later inline
+  // GET would render — so always set it, or download with download_name.
   string content_type = 3;
   // Lifetime of the URL in seconds, 1-604800. 0 means the default, 600.
   int32 expires_s = 4;
-  // Declared size of the upload in bytes. When > 0 it is signed into the URL as
-  // Content-Length, so the store refuses any body of a different length: an
-  // exact-size bound, which is therefore also a maximum. 0 means unbounded.
+  // Upper bound on the upload size in bytes, checked against content_length:
+  // a presigned PUT cannot express a range (only an exact Content-Length), so
+  // a ceiling is enforceable only through a declared exact size. When > 0,
+  // content_length must also be > 0 and <= max_bytes, else the node refuses
+  // (MAX_BYTES_REQUIRES_CONTENT_LENGTH / MAX_BYTES_EXCEEDED). 0 means no cap.
   int64 max_bytes = 5;
+  // Exact size of the upload in bytes. When > 0 it is signed into the URL as
+  // Content-Length, so the store refuses a body of any other length. 0 means
+  // the length is not signed (any size the store accepts).
+  int64 content_length = 6;
 }
 
 // A presigned upload: send the bytes with `method` to `url`, carrying `headers`.
@@ -71,8 +79,8 @@ message PresignPutResult {
   // Always "PUT".
   string method = 2;
   // Headers the upload must send exactly as given, because they are signed:
-  // Content-Type when content_type was set, Content-Length when max_bytes was
-  // set (browsers set Content-Length themselves from the body).
+  // Content-Type when content_type was set, Content-Length when content_length
+  // was set (browsers set Content-Length themselves from the body).
   map<string, string> headers = 3;
   // When the URL stops working, as Unix seconds (UTC).
   int64 expires_at_unix = 4;

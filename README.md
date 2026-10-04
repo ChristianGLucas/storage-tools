@@ -7,7 +7,7 @@ short-lived URLs only after its own access check. URLs are never stored.
 
 | Node | Input → Output | Network |
 |---|---|---|
-| `PresignPut` | `{connection, key, content_type, expires_s, max_bytes}` → `{url, method:"PUT", headers, expires_at_unix}` | none (pure signing) |
+| `PresignPut` | `{connection, key, content_type, expires_s, max_bytes, content_length}` → `{url, method:"PUT", headers, expires_at_unix}` | none (pure signing) |
 | `PresignGet` | `{connection, key, expires_s, download_name}` → `{url, expires_at_unix}` | none (pure signing) |
 | `HeadObject` | `{connection, key}` → `{exists, size, content_type}` | one signed HEAD |
 | `DeleteObject` | `{connection, key}` → `{ok}` | one signed DELETE |
@@ -62,7 +62,8 @@ nodes:
         connection.secret_access_key_secret_name: "'__axiom_prov_<slug>_storage_secret_access_key'"
         key: key
         content_type: content_type
-        max_bytes: size
+        content_length: size        # exact size, signed
+        max_bytes: "10485760"       # the app's cap; refused when size exceeds it
 ```
 
 ## Semantics
@@ -70,8 +71,14 @@ nodes:
 - **Keys** are opaque caller-owned strings: 1-1024 UTF-8 bytes, no leading `/`,
   no empty / `.` / `..` segments, no control characters. The nodes never list the bucket.
 - **PresignPut** signs `Content-Type` (when set) and `Content-Length` (when
-  `max_bytes > 0`): the store refuses a body of a different type or length.
+  `content_length > 0`): the store refuses a body of a different type or length.
   Send `headers` exactly as returned (browsers set Content-Length themselves).
+  `max_bytes` is a CEILING on `content_length`. A presigned PUT can only pin an
+  exact length, never a range, so a cap needs a declared `content_length`
+  (else `MAX_BYTES_REQUIRES_CONTENT_LENGTH`; over the cap, `MAX_BYTES_EXCEEDED`).
+- **Always set `content_type`.** Unsigned, the uploader can store active content
+  (`text/html`, `image/svg+xml`) that an inline GET renders on the storage
+  origin; for untrusted uploads also pass `download_name` (attachment) on GET.
 - **PresignGet** with `download_name` signs `response-content-disposition`
   (`attachment; filename="<ascii>"; filename*=UTF-8''<exact>`).
 - `expires_s` 1-604800, 0 → 600.
@@ -86,4 +93,5 @@ nodes:
 - `nodes/live_roundtrip_test.py` (opt-in, `STORAGE_LIVE_*` env): a real
   PUT → HEAD → GET (+disposition) → DELETE round trip, plus negatives (wrong
   Content-Type, wrong length, tampered signature, expired URL, GET URL used to
-  write, wrong secret → STORAGE_FORBIDDEN).
+  write, wrong secret → STORAGE_FORBIDDEN). Run so far against a local
+  SeaweedFS S3 gateway; not yet against Neon Object Storage.

@@ -62,7 +62,8 @@ def test_round_trip():
     assert head_object(ax, HeadObjectInput(connection=conn, key=key)).exists is False
 
     put = presign_put(ax, PresignPutInput(connection=conn, key=key, content_type="application/pdf",
-                                          max_bytes=len(payload), expires_s=120))
+                                          content_length=len(payload), max_bytes=10 * 1024 * 1024,
+                                          expires_s=120))
     # NEGATIVES first: the signed headers are binding.
     st, _, _ = _send("PUT", put.url, payload, {"Content-Type": "image/png"})
     assert st == 403, f"wrong Content-Type accepted ({st})"
@@ -93,6 +94,14 @@ def test_round_trip():
     time.sleep(2.5)
     st, _, body = _send("GET", short.url)
     assert st == 403 and body != payload, f"expired URL still served ({st})"
+
+    # Unsigned length: any size the store accepts.
+    key2 = f"{prefix}/free.txt"
+    free = presign_put(ax, PresignPutInput(connection=conn, key=key2, content_type="text/plain"))
+    st, _, _ = _send("PUT", free.url, b"0123456789", {"Content-Type": "text/plain"})
+    assert st == 200
+    assert head_object(ax, HeadObjectInput(connection=conn, key=key2)).size == 10
+    assert delete_object(ax, DeleteObjectInput(connection=conn, key=key2)).ok is True
 
     assert delete_object(ax, DeleteObjectInput(connection=conn, key=key)).ok is True
     assert head_object(ax, HeadObjectInput(connection=conn, key=key)).exists is False

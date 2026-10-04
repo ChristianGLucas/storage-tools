@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0emessages.proto\x12\"christiangeorgelucas.storage_tools\"\xb3\x01\n\x11StorageConnection\x12\x1c\n\x14\x65ndpoint_secret_name\x18\x01 \x01(\t\x12\x1a\n\x12region_secret_name\x18\x02 \x01(\t\x12\x1a\n\x12\x62ucket_secret_name\x18\x03 \x01(\t\x12!\n\x19\x61\x63\x63\x65ss_key_id_secret_name\x18\x04 \x01(\t\x12%\n\x1dsecret_access_key_secret_name\x18\x05 \x01(\t\"\xa5\x01\n\x0fPresignPutInput\x12I\n\nconnection\x18\x01 \x01(\x0b\x32\x35.christiangeorgelucas.storage_tools.StorageConnection\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x14\n\x0c\x63ontent_type\x18\x03 \x01(\t\x12\x11\n\texpires_s\x18\x04 \x01(\x05\x12\x11\n\tmax_bytes\x18\x05 \x01(\x03\"\xcc\x01\n\x10PresignPutResult\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x0e\n\x06method\x18\x02 \x01(\t\x12R\n\x07headers\x18\x03 \x03(\x0b\x32\x41.christiangeorgelucas.storage_tools.PresignPutResult.HeadersEntry\x12\x17\n\x0f\x65xpires_at_unix\x18\x04 \x01(\x03\x1a.\n\x0cHeadersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\x93\x01\n\x0fPresignGetInput\x12I\n\nconnection\x18\x01 \x01(\x0b\x32\x35.christiangeorgelucas.storage_tools.StorageConnection\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x11\n\texpires_s\x18\x03 \x01(\x05\x12\x15\n\rdownload_name\x18\x04 \x01(\t\"8\n\x10PresignGetResult\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x17\n\x0f\x65xpires_at_unix\x18\x02 \x01(\x03\"i\n\x0fHeadObjectInput\x12I\n\nconnection\x18\x01 \x01(\x0b\x32\x35.christiangeorgelucas.storage_tools.StorageConnection\x12\x0b\n\x03key\x18\x02 \x01(\t\"F\n\x10HeadObjectResult\x12\x0e\n\x06\x65xists\x18\x01 \x01(\x08\x12\x0c\n\x04size\x18\x02 \x01(\x03\x12\x14\n\x0c\x63ontent_type\x18\x03 \x01(\t\"k\n\x11\x44\x65leteObjectInput\x12I\n\nconnection\x18\x01 \x01(\x0b\x32\x35.christiangeorgelucas.storage_tools.StorageConnection\x12\x0b\n\x03key\x18\x02 \x01(\t\" \n\x12\x44\x65leteObjectResult\x12\n\n\x02ok\x18\x01 \x01(\x08\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0emessages.proto\x12\"christiangeorgelucas.storage_tools\"\xb3\x01\n\x11StorageConnection\x12\x1c\n\x14\x65ndpoint_secret_name\x18\x01 \x01(\t\x12\x1a\n\x12region_secret_name\x18\x02 \x01(\t\x12\x1a\n\x12\x62ucket_secret_name\x18\x03 \x01(\t\x12!\n\x19\x61\x63\x63\x65ss_key_id_secret_name\x18\x04 \x01(\t\x12%\n\x1dsecret_access_key_secret_name\x18\x05 \x01(\t\"\xbd\x01\n\x0fPresignPutInput\x12I\n\nconnection\x18\x01 \x01(\x0b\x32\x35.christiangeorgelucas.storage_tools.StorageConnection\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x14\n\x0c\x63ontent_type\x18\x03 \x01(\t\x12\x11\n\texpires_s\x18\x04 \x01(\x05\x12\x11\n\tmax_bytes\x18\x05 \x01(\x03\x12\x16\n\x0e\x63ontent_length\x18\x06 \x01(\x03\"\xcc\x01\n\x10PresignPutResult\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x0e\n\x06method\x18\x02 \x01(\t\x12R\n\x07headers\x18\x03 \x03(\x0b\x32\x41.christiangeorgelucas.storage_tools.PresignPutResult.HeadersEntry\x12\x17\n\x0f\x65xpires_at_unix\x18\x04 \x01(\x03\x1a.\n\x0cHeadersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\x93\x01\n\x0fPresignGetInput\x12I\n\nconnection\x18\x01 \x01(\x0b\x32\x35.christiangeorgelucas.storage_tools.StorageConnection\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x11\n\texpires_s\x18\x03 \x01(\x05\x12\x15\n\rdownload_name\x18\x04 \x01(\t\"8\n\x10PresignGetResult\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x17\n\x0f\x65xpires_at_unix\x18\x02 \x01(\x03\"i\n\x0fHeadObjectInput\x12I\n\nconnection\x18\x01 \x01(\x0b\x32\x35.christiangeorgelucas.storage_tools.StorageConnection\x12\x0b\n\x03key\x18\x02 \x01(\t\"F\n\x10HeadObjectResult\x12\x0e\n\x06\x65xists\x18\x01 \x01(\x08\x12\x0c\n\x04size\x18\x02 \x01(\x03\x12\x14\n\x0c\x63ontent_type\x18\x03 \x01(\t\"k\n\x11\x44\x65leteObjectInput\x12I\n\nconnection\x18\x01 \x01(\x0b\x32\x35.christiangeorgelucas.storage_tools.StorageConnection\x12\x0b\n\x03key\x18\x02 \x01(\t\" \n\x12\x44\x65leteObjectResult\x12\n\n\x02ok\x18\x01 \x01(\x08\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,21 +36,21 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_STORAGECONNECTION']._serialized_start=55
   _globals['_STORAGECONNECTION']._serialized_end=234
   _globals['_PRESIGNPUTINPUT']._serialized_start=237
-  _globals['_PRESIGNPUTINPUT']._serialized_end=402
-  _globals['_PRESIGNPUTRESULT']._serialized_start=405
-  _globals['_PRESIGNPUTRESULT']._serialized_end=609
-  _globals['_PRESIGNPUTRESULT_HEADERSENTRY']._serialized_start=563
-  _globals['_PRESIGNPUTRESULT_HEADERSENTRY']._serialized_end=609
-  _globals['_PRESIGNGETINPUT']._serialized_start=612
-  _globals['_PRESIGNGETINPUT']._serialized_end=759
-  _globals['_PRESIGNGETRESULT']._serialized_start=761
-  _globals['_PRESIGNGETRESULT']._serialized_end=817
-  _globals['_HEADOBJECTINPUT']._serialized_start=819
-  _globals['_HEADOBJECTINPUT']._serialized_end=924
-  _globals['_HEADOBJECTRESULT']._serialized_start=926
-  _globals['_HEADOBJECTRESULT']._serialized_end=996
-  _globals['_DELETEOBJECTINPUT']._serialized_start=998
-  _globals['_DELETEOBJECTINPUT']._serialized_end=1105
-  _globals['_DELETEOBJECTRESULT']._serialized_start=1107
-  _globals['_DELETEOBJECTRESULT']._serialized_end=1139
+  _globals['_PRESIGNPUTINPUT']._serialized_end=426
+  _globals['_PRESIGNPUTRESULT']._serialized_start=429
+  _globals['_PRESIGNPUTRESULT']._serialized_end=633
+  _globals['_PRESIGNPUTRESULT_HEADERSENTRY']._serialized_start=587
+  _globals['_PRESIGNPUTRESULT_HEADERSENTRY']._serialized_end=633
+  _globals['_PRESIGNGETINPUT']._serialized_start=636
+  _globals['_PRESIGNGETINPUT']._serialized_end=783
+  _globals['_PRESIGNGETRESULT']._serialized_start=785
+  _globals['_PRESIGNGETRESULT']._serialized_end=841
+  _globals['_HEADOBJECTINPUT']._serialized_start=843
+  _globals['_HEADOBJECTINPUT']._serialized_end=948
+  _globals['_HEADOBJECTRESULT']._serialized_start=950
+  _globals['_HEADOBJECTRESULT']._serialized_end=1020
+  _globals['_DELETEOBJECTINPUT']._serialized_start=1022
+  _globals['_DELETEOBJECTINPUT']._serialized_end=1129
+  _globals['_DELETEOBJECTRESULT']._serialized_start=1131
+  _globals['_DELETEOBJECTRESULT']._serialized_end=1163
 # @@protoc_insertion_point(module_scope)

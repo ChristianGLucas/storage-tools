@@ -101,7 +101,7 @@ def test_canonical_query_sorts_by_encoded_key():
 
 
 def test_canonical_headers_trim_and_collapse():
-    block, signed = core.canonical_headers({"Content-Type": "  text/plain;   charset=utf-8 ", "HOST": "h"})
+    block, signed = core.canonical_headers({"Content-Type": "  text/plain;  \t charset=utf-8 ", "HOST": "h"})
     assert block == "content-type:text/plain; charset=utf-8\nhost:h\n"
     assert signed == "content-type;host"
 
@@ -182,6 +182,8 @@ def test_resolve_store_reads_exactly_the_five_named_secrets():
     ("http://127.0.0.1:9000", "http", "127.0.0.1:9000"),
     ("http://minio:80", "http", "minio"),
     ("  https://s3.example.com  ", "https", "s3.example.com"),
+    ("http://[::1]:9000", "http", "[::1]:9000"),
+    ("https://[2001:db8::1]", "https", "[2001:db8::1]"),
 ])
 def test_endpoint_forms(endpoint, scheme, host):
     store = core.resolve_store(Ctx({**VALUES, NAMES["endpoint_secret_name"]: endpoint}), connection())
@@ -191,6 +193,9 @@ def test_endpoint_forms(endpoint, scheme, host):
 @pytest.mark.parametrize("endpoint", [
     "s3.example.com", "ftp://s3.example.com", "https://s3.example.com/bucket",
     "https://s3.example.com?x=1", "https://user:pw@s3.example.com", "https://?q",
+    "https://user@s3.example.com", "https://:pw@s3.example.com",
+    "https://host:abc", "https://host:99999", "https://[::1", "https://exa mple.com",
+    "https://héllo.example",
 ])
 def test_endpoint_refused_without_echoing_it(endpoint):
     with pytest.raises(AxiomNodeError) as e:

@@ -74,7 +74,9 @@ def canonical_query(params: Mapping[str, str]) -> str:
 
 
 def _canonical_header_value(v: str) -> str:
-    return " ".join(v.strip().split())
+    """SigV4: trim and collapse runs of ASCII space/tab (not Unicode whitespace,
+    which SigV4 leaves alone)."""
+    return " ".join(p for p in v.replace("\t", " ").split(" ") if p)
 
 
 def canonical_headers(headers: Mapping[str, str]) -> Tuple[str, str]:
@@ -225,26 +227,36 @@ def _resolve_secret(ax, slot: str, name: str) -> str:
 def resolve_store(ax, connection) -> Store:
     vals = {slot: _resolve_secret(ax, slot, getattr(connection, slot)) for slot in CONNECTION_SLOTS}
 
-    parts = urlsplit(vals["endpoint_secret_name"])
-    if (
-        parts.scheme not in ("http", "https")
-        or not parts.hostname
-        or parts.path not in ("", "/")
-        or parts.query
-        or parts.fragment
-        or parts.username
-        or parts.password
-    ):
-        raise AxiomNodeError(
+    def bad_endpoint():
+        # Never chain or quote the parse error: its text quotes the secret.
+        return AxiomNodeError(
             "ENDPOINT_INVALID",
             "the storage endpoint secret must be an absolute http(s) URL with no path, "
             "query or credentials (e.g. https://br-xxx.storage.c-1.us-east-2.aws.neon.tech)",
             {"slot": "endpoint_secret_name"},
         )
-    host = parts.hostname.lower()
+
+    try:
+        parts = urlsplit(vals["endpoint_secret_name"])
+        port = parts.port
+        hostname = parts.hostname
+    except ValueError:
+        raise bad_endpoint() from None
+    if (
+        parts.scheme not in ("http", "https")
+        or not hostname
+        or not hostname.isascii()
+        or any(c.isspace() for c in hostname)
+        or parts.path not in ("", "/")
+        or parts.query
+        or parts.fragment
+        or parts.username is not None
+        or parts.password is not None
+    ):
+        raise bad_endpoint()
+    host = hostname
     if ":" in host:  # IPv6 literal
         host = f"[{host}]"
-    port = parts.port
     if port is not None and not (
         (parts.scheme == "https" and port == 443) or (parts.scheme == "http" and port == 80)
     ):
@@ -302,10 +314,13 @@ def validate_expires(expires_s: int) -> int:
     return expires_s
 
 
-def validate_header_value(field: str, value: str) -> str:
-    if any(ord(c) < 0x20 or ord(c) == 0x7F for c in value):
-        raise AxiomNodeError(f"{field.upper()}_INVALID", f"{field} must not contain control characters",
-                             {"field": field})
+def validate_content_type(value: str) -> str:
+    """Visible-ASCII media type, returned in canonical (signed) form — a value a
+    browser can actually send as a header."""
+    if not all(c == " " or c == "\t" or 0x21 <= ord(c) <= 0x7E for c in value):
+        raise AxiomNodeError("CONTENT_TYPE_INVALID",
+                             "content_type must be visible ASCII (e.g. image/png)",
+                             {"field": "content_type"})
     return _canonical_header_value(value)
 
 

@@ -46,13 +46,10 @@ def main():
     print(json.dumps(out, indent=2, ensure_ascii=False))
 
 
-if __name__ == "__main__":
-    main()
-
 
 def header_vectors():
     """Authorization headers for the bodiless HEAD/DELETE calls, from
-    botocore's S3SigV4Auth (which sends UNSIGNED-PAYLOAD over https)."""
+    botocore's S3SigV4Auth (x-amz-content-sha256 = SHA-256 of the empty body)."""
     from botocore.auth import S3SigV4Auth
     from botocore.awsrequest import AWSRequest
     from botocore.credentials import Credentials
@@ -68,4 +65,5 @@ def header_vectors():
 
 
 if __name__ == "__main__":
+    main()
     header_vectors()
