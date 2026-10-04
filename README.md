@@ -81,6 +81,9 @@ nodes:
   origin; for untrusted uploads also pass `download_name` (attachment) on GET.
 - **PresignGet** with `download_name` signs `response-content-disposition`
   (`attachment; filename="<ascii>"; filename*=UTF-8''<exact>`).
+  **Neon Object Storage ignores this parameter** (verified live 2026-10-04: the
+  URL works, no Content-Disposition comes back). On Neon the browser saves under
+  the key's last path segment, so end keys in the file name you want.
 - `expires_s` 1-604800, 0 → 600.
 - **HeadObject**: 404 → `exists=false`. **DeleteObject**: a missing key is `ok=true`.
 - Errors are `AxiomNodeError` with stable codes (see axiom.yaml) and never carry a secret value.
@@ -93,5 +96,7 @@ nodes:
 - `nodes/live_roundtrip_test.py` (opt-in, `STORAGE_LIVE_*` env): a real
   PUT → HEAD → GET (+disposition) → DELETE round trip, plus negatives (wrong
   Content-Type, wrong length, tampered signature, expired URL, GET URL used to
-  write, wrong secret → STORAGE_FORBIDDEN). Run so far against a local
-  SeaweedFS S3 gateway; not yet against Neon Object Storage.
+  write, wrong secret → STORAGE_FORBIDDEN). Run against a local SeaweedFS S3
+  gateway, and on 2026-10-04 against real Neon Object Storage through deployed
+  0.1.1 Instances over provisioned app secrets: 13/14 — everything above except
+  Content-Disposition, which Neon ignores.
