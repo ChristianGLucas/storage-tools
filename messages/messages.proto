@@ -140,3 +140,41 @@ message DeleteObjectResult {
   // True when the object is gone.
   bool ok = 1;
 }
+
+// One frame of a file streamed INTO StreamPut, the file's bytes in order.
+// upload_url, content_type and size are read from the FIRST frame; later frames
+// carry only data (repeating the others is harmless; they are not read).
+message StreamPutInput {
+  // Which bucket (secret names only); upload_url must point into it.
+  StorageConnection connection = 1;
+  // A presigned PUT URL that PresignPut minted for this file (after the app's
+  // own access check): it pins the object key, the Content-Type and the exact
+  // Content-Length, and the store verifies its signature. StreamPut adds no
+  // authority of its own: it only carries the bytes to it.
+  string upload_url = 2;
+  // The Content-Type PresignPut signed (send exactly what it returned).
+  string content_type = 3;
+  // The file's exact size in bytes: the Content-Length PresignPut signed.
+  int64 size = 4;
+  // The next bytes of the file.
+  bytes data = 5;
+  // True on the file's last frame (informational; the end of the input stream
+  // is what ends the upload).
+  bool last = 6;
+}
+
+// StreamPut's one answer, after the last frame: whether the store took the
+// file, and what was sent.
+message StreamPutResult {
+  // True when the store answered 2xx for exactly `size` bytes.
+  bool ok = 1;
+  // Machine token when not ok: URL_INVALID, SIZE_MISMATCH, STORAGE_FORBIDDEN,
+  // STORAGE_HTTP_<status>, STORAGE_UNAVAILABLE, or a connection error code.
+  string error_code = 2;
+  // Why not, in words; empty when ok.
+  string error = 3;
+  // Bytes sent to the store.
+  int64 bytes = 4;
+  // Lowercase hex SHA-256 of the bytes sent.
+  string sha256 = 5;
+}
